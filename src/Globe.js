@@ -1,20 +1,31 @@
 import { useEffect, useRef, useState } from "react";
+import parseJson from "parse-json";
 import Globe from "react-globe.gl";
 import { ipstackKey } from "./keys";
 
-async function ipLookup(ip) {
+// TODO: Change to use ipgeolocation.io Javascript API
+// https://ipgeolocation.io/documentation/ip-geolocation-api.html
+async function getIPGeo(ip) {
   const url = "http://api.ipstack.com/" + ip + "?access_key=" + ipstackKey;
   const response = await fetch(url);
-  return await response.json();
+  return parseJson(await response.text());
 }
 
 async function getPeerData(ID) {
   const url =
     "https://node1.delegate.ipfs.io/api/v0/dht/findpeer?arg=" +
     ID +
-    "&verbose=true";
+    "&verbose=false";
   const response = await fetch(url, { method: "POST" });
-  const data = await response.json();
+  const text = await response.text();
+
+  const errMessage = "failed to find any peer in table";
+  if (text.includes(errMessage)) {
+    console.error(errMessage, " for ", ID);
+    return null;
+  }
+
+  const data = parseJson(text);
   const addresses = data.Responses[0].Addrs;
   const ip = addresses
     .map((address) => address.split("/")[2])
@@ -25,13 +36,13 @@ async function getPeerData(ID) {
         !address.includes(":")
     )[0];
 
-  return await ipLookup(ip);
+  return await getIPGeo(ip);
 }
 
 async function getUserData() {
   const url = "http://api.ipstack.com/check?access_key=" + ipstackKey;
   const response = await fetch(url);
-  return await response.json();
+  return parseJson(await response.text());
 }
 
 async function getProvidersData() {
@@ -46,7 +57,7 @@ async function getProvidersData() {
   const providersData = text
     .split("\n")
     .filter((line) => line.length > 0)
-    .map((line) => JSON.parse(line));
+    .map((line) => parseJson(line));
   return providersData;
 }
 
@@ -79,13 +90,18 @@ async function getArcData() {
   let arcsData = [];
   let i = 0;
   while (providersData[i].Type === Types.SendingQuery) {
-    const peerData = await getPeerData(providersData[i].ID);
+    const peerID = providersData[i].ID;
+    const peerData = await getPeerData(peerID);
+    if (peerData == null) continue;
+
     arcsData.push({
       startLat: userData.latitude,
       startLng: userData.longitude,
       endLat: peerData.latitude,
       endLng: peerData.longitude,
       color: colors[providersData[i].Type],
+      label: "Sending query to " + peerID.substring(0, 5) + "...",
+      initialGap: 5 + i,
     });
     i++;
   }
@@ -105,7 +121,7 @@ export default function GlobeWrapper() {
     console.log(arcsData);
     if (arcsData.length) {
       const { startLat, startLng } = arcsData[0];
-      globeEl.current.pointOfView({ lat: startLat, lng: startLng });
+      globeEl.current.pointOfView({ lat: startLat, lng: startLng }, 4000);
     }
   }, [arcsData]);
 
@@ -114,10 +130,14 @@ export default function GlobeWrapper() {
       ref={globeEl}
       globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
       arcsData={arcsData}
-      arcColor={"color"}
-      arcDashLength={() => Math.random()}
-      arcDashGap={() => Math.random()}
-      arcDashAnimateTime={() => Math.random() * 4000 + 500}
+      arcColor={(d) => d.color}
+      arcLabel={(d) => d.label}
+      arcDashLength={0.5}
+      arcDashGap={10000}
+      arcDashInitialGap={(d) => d.initialGap}
+      arcDashAnimateTime={() => 1000}
+      // TODO
+      // onArcHover={() => null}
     />
   );
 }

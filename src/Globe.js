@@ -26,9 +26,11 @@ async function getPeerData(ID) {
   }
 
   const data = parseJson(text);
+  console.log("peer data", data);
   const addresses = data.Responses[0].Addrs;
   const ip = addresses
     .map((address) => address.split("/")[2])
+    .filter((address) => address != null)
     .filter(
       (address) =>
         !address.startsWith("127") &&
@@ -85,6 +87,7 @@ async function getArcData() {
   ];
 
   const providersData = await getProvidersData();
+  console.log("providers Data", providersData);
   const userData = await getUserData();
 
   let arcsData = [];
@@ -101,7 +104,7 @@ async function getArcData() {
       endLng: peerData.longitude,
       color: colors[providersData[i].Type],
       label: "Sending query to " + peerID.substring(0, 5) + "...",
-      initialGap: 5 + i,
+      initialGap: i,
     });
     i++;
   }
@@ -112,21 +115,35 @@ async function getArcData() {
 export default function GlobeWrapper() {
   const globeEl = useRef();
   const [arcsData, setArcsData] = useState([]);
+  const startTime = useRef(new Date());
 
   useEffect(() => {
     getArcData().then((data) => setArcsData(data));
+
+    globeEl.current.controls().autoRotate = true;
+    globeEl.current.controls().autoRotateSpeed = 0.05;
   }, []);
 
   useEffect(() => {
-    console.log(arcsData);
+    arcsData.length && console.log("arcsData", arcsData);
     if (arcsData.length) {
       const { startLat, startLng } = arcsData[0];
-      globeEl.current.pointOfView({ lat: startLat, lng: startLng }, 4000);
+      const FOCUSTIME = 1000;
+      globeEl.current.pointOfView({ lat: startLat, lng: startLng }, FOCUSTIME);
+
+      const endTime = new Date();
+      const delay = (endTime - startTime.current + 2 * FOCUSTIME) / 1000;
+
+      console.log("delay (s):", delay);
+      for (let i = 0; i < arcsData.length; i++) {
+        arcsData[i].initialGap += delay;
+      }
     }
-  }, [arcsData]);
+  }, [arcsData, startTime]);
 
   return (
     <Globe
+      // height={window.innerHeight * 0.8}
       ref={globeEl}
       globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
       arcsData={arcsData}
@@ -135,7 +152,7 @@ export default function GlobeWrapper() {
       arcDashLength={0.5}
       arcDashGap={10000}
       arcDashInitialGap={(d) => d.initialGap}
-      arcDashAnimateTime={() => 1000}
+      arcDashAnimateTime={1000}
       // TODO
       // onArcHover={() => null}
     />

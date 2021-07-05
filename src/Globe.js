@@ -115,7 +115,7 @@ async function getArcData() {
 export default function GlobeWrapper() {
   const globeEl = useRef();
   const [arcsData, setArcsData] = useState([]);
-  const startTime = useRef(new Date());
+  // const startTime = useRef(new Date());
 
   useEffect(() => {
     getArcData().then((data) => setArcsData(data));
@@ -131,15 +131,16 @@ export default function GlobeWrapper() {
       const FOCUSTIME = 1000;
       globeEl.current.pointOfView({ lat: startLat, lng: startLng }, FOCUSTIME);
 
-      const endTime = new Date();
-      const delay = (endTime - startTime.current + 2 * FOCUSTIME) / 1000;
+      // const endTime = new Date();
+      // const delay = (endTime - startTime.current + 2 * FOCUSTIME) / 1000;
+      const delay = 2;
 
       console.log("delay (s):", delay);
       for (let i = 0; i < arcsData.length; i++) {
         arcsData[i].initialGap += delay;
       }
     }
-  }, [arcsData, startTime]);
+  }, [arcsData]);
 
   return (
     <Globe

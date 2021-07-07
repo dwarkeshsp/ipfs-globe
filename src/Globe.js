@@ -12,6 +12,7 @@ async function getIPGeo(ip) {
 }
 
 async function getPeerData(ID) {
+  console.log("peed id", ID);
   const url =
     "https://node1.delegate.ipfs.io/api/v0/dht/findpeer?arg=" +
     ID +
@@ -21,7 +22,7 @@ async function getPeerData(ID) {
 
   const errMessage = "failed to find any peer in table";
   if (text.includes(errMessage)) {
-    console.error(errMessage, " for ", ID);
+    console.error(errMessage, "for", ID);
     return null;
   }
 
@@ -64,26 +65,23 @@ async function getProvidersData() {
 }
 
 async function getArcData() {
-  const Types = {
-    SendingQuery: 0,
-    PeerResponse: 1, // gives nodes to use
-    FinalPeer: 2,
-    QueryError: 3,
-    Provider: 4,
-    Value: 5,
-    AddingPeer: 6,
-    DialingPeer: 7, // setting up connection
-  };
+  const LARGE = 100000;
+  function Response(name, color, dashGap, labelPrefix) {
+    this.name = name;
+    this.color = color;
+    this.dashGap = dashGap;
+    this.labelPrefix = labelPrefix;
+  }
 
-  const colors = [
-    "red",
-    "yellow",
-    "blue",
-    "orange",
-    "green",
-    "violet",
-    "white",
-    "black",
+  const Responses = [
+    new Response("SendingQuery", "red", LARGE, ""),
+    new Response("PeerResponse", "yellow", LARGE, ""),
+    new Response("FinalPeer", "orange", LARGE, ""),
+    new Response("QueryError", "black", LARGE, ""),
+    new Response("Provider", "green", 0.5, ""),
+    new Response("Value", "violet", LARGE, ""),
+    new Response("AddingPeer", "white", LARGE, ""),
+    new Response("DialingPeer", "blue", LARGE, ""),
   ];
 
   const providersData = await getProvidersData();
@@ -91,24 +89,35 @@ async function getArcData() {
   const userData = await getUserData();
 
   let arcsData = [];
-  let i = 0;
-  while (providersData[i].Type === Types.SendingQuery) {
-    const peerID = providersData[i].ID;
+
+  for (const [i, response] of providersData.entries()) {
+    const isProvider = Responses[response.Type].name === "Provider";
+    const peerID = isProvider ? response.Responses[0].ID : response.ID;
     const peerData = await getPeerData(peerID);
     if (peerData == null) continue;
 
+    const { name, color, dashGap, labelPrefix } = Responses[response.Type];
+
+    let startLat = userData.latitude,
+      startLng = userData.longitude,
+      endLat = peerData.latitude,
+      endLng = peerData.longitude;
+
+    if (name === "PeerResponse") [startLat, startLng] = [endLat, endLng];
+
     arcsData.push({
-      startLat: userData.latitude,
-      startLng: userData.longitude,
-      endLat: peerData.latitude,
-      endLng: peerData.longitude,
-      color: colors[providersData[i].Type],
-      label: "Sending query to " + peerID.substring(0, 5) + "...",
+      startLat: startLat,
+      startLng: startLng,
+      endLat: endLat,
+      endLng: endLng,
+      color: color,
+      dashGap: dashGap,
+      label: [labelPrefix, peerID.substring(0, 5), "..."].join(" "),
       initialGap: i,
     });
-    i++;
   }
 
+  console.log("final arcs data", arcsData);
   return arcsData;
 }
 

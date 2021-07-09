@@ -3,43 +3,69 @@ import parseJson from "parse-json";
 import Globe from "react-globe.gl";
 import { ipstackKey } from "./keys";
 
+const LARGE = 100000;
+function Response(name, color, dashGap, labelPrefix) {
+  this.name = name;
+  this.color = color;
+  this.dashGap = dashGap;
+  this.labelPrefix = labelPrefix;
+}
+
+const Responses = [
+  new Response("SendingQuery", "red", LARGE, "Sending query to"),
+  new Response("PeerResponse", "yellow", LARGE, "Recieving response from"),
+  new Response("FinalPeer", "orange", LARGE, ""),
+  new Response("QueryError", "black", LARGE, ""),
+  new Response("Provider", "green", 0.5, "Provider found"),
+  new Response("Value", "violet", LARGE, ""),
+  new Response("AddingPeer", "white", LARGE, ""),
+  new Response("DialingPeer", "blue", LARGE, "Dialing"),
+];
+
 // TODO: Change to use ipgeolocation.io Javascript API
 // https://ipgeolocation.io/documentation/ip-geolocation-api.html
-async function getIPGeo(ip) {
-  const url = "http://api.ipstack.com/" + ip + "?access_key=" + ipstackKey;
+async function getIPGeo(IP) {
+  const url = "http://api.ipstack.com/" + IP + "?access_key=" + ipstackKey;
   const response = await fetch(url);
   return parseJson(await response.text());
 }
 
-async function getPeerData(ID) {
-  console.log("peed id", ID);
-  const url =
-    "https://node1.delegate.ipfs.io/api/v0/dht/findpeer?arg=" +
-    ID +
-    "&verbose=false";
-  const response = await fetch(url, { method: "POST" });
-  const text = await response.text();
+async function getPeerGeo(response) {
+  async function getPeerData(ID) {
+    const url =
+      "https://node1.delegate.ipfs.io/api/v0/dht/findpeer?arg=" +
+      ID +
+      "&verbose=false";
+    const apiResponse = await fetch(url, { method: "POST" });
+    const text = await apiResponse.text();
 
-  const errMessage = "failed to find any peer in table";
-  if (text.includes(errMessage)) {
-    console.error(errMessage, "for", ID);
-    return null;
+    const errMessage = "failed to find any peer in table";
+    if (text.includes(errMessage)) {
+      console.error(errMessage, "for", ID);
+      return null;
+    }
+    return parseJson(text);
   }
 
-  const data = parseJson(text);
-  console.log("peer data", data);
-  const addresses = data.Responses[0].Addrs;
-  const ip = addresses
-    .map((address) => address.split("/")[2])
-    .filter((address) => address != null)
-    .filter(
-      (address) =>
-        !address.startsWith("127") &&
-        !address.startsWith("172") &&
-        !address.includes(":")
-    )[0];
+  function getAddressesIP(addresses) {
+    return addresses
+      .map((address) => address.split("/")[2])
+      .filter((address) => address != null)
+      .filter(
+        (address) =>
+          !address.startsWith("127") &&
+          !address.startsWith("172") &&
+          !address.includes(":")
+      )[0];
+  }
 
-  return await getIPGeo(ip);
+  const isProvider = Responses[response.Type].name === "Provider";
+  const data = isProvider ? response : await getPeerData(response.ID);
+  if (data == null) return null;
+  const addresses = data.Responses[0].Addrs;
+  if (!addresses.length) return null;
+  const IP = getAddressesIP(addresses);
+  return await getIPGeo(IP);
 }
 
 async function getUserGeo() {
@@ -65,25 +91,6 @@ async function getProvidersData() {
 }
 
 async function getArcData() {
-  const LARGE = 100000;
-  function Response(name, color, dashGap, labelPrefix) {
-    this.name = name;
-    this.color = color;
-    this.dashGap = dashGap;
-    this.labelPrefix = labelPrefix;
-  }
-
-  const Responses = [
-    new Response("SendingQuery", "red", LARGE, "Sending query to"),
-    new Response("PeerResponse", "yellow", LARGE, "Recieving response from"),
-    new Response("FinalPeer", "orange", LARGE, ""),
-    new Response("QueryError", "black", LARGE, ""),
-    new Response("Provider", "green", 0.5, "Provider found"),
-    new Response("Value", "violet", LARGE, ""),
-    new Response("AddingPeer", "white", LARGE, ""),
-    new Response("DialingPeer", "blue", LARGE, "Dialing"),
-  ];
-
   const providersData = await getProvidersData();
   console.log("providers Data", providersData);
   const userData = await getUserGeo();
@@ -92,17 +99,16 @@ async function getArcData() {
   let i = 0;
   for (const response of providersData) {
     const isProvider = Responses[response.Type].name === "Provider";
-    if (isProvider) continue;
     const peerID = isProvider ? response.Responses[0].ID : response.ID;
-    const peerData = await getPeerData(peerID);
-    if (peerData == null) continue;
+    const peerGeo = await getPeerGeo(response);
+    if (peerGeo == null) continue;
 
     const { name, color, dashGap, labelPrefix } = Responses[response.Type];
 
     let startLat = userData.latitude,
       startLng = userData.longitude,
-      endLat = peerData.latitude,
-      endLng = peerData.longitude;
+      endLat = peerGeo.latitude,
+      endLng = peerGeo.longitude;
 
     if (name === "PeerResponse")
       [startLat, startLng, endLat, endLng] = [
@@ -143,7 +149,7 @@ export default function GlobeWrapper() {
       globeEl.current.pointOfView({ lat: latitude, lng: longitude }, 1000)
     );
 
-    // getArcData().then((data) => setArcsData(data));
+    getArcData().then((data) => setArcsData(data));
   }, []);
 
   useEffect(() => {
@@ -151,7 +157,6 @@ export default function GlobeWrapper() {
     if (!arcsData.length) {
       return;
     }
-    const FOCUSTIME = 1000;
 
     let index = 0;
 
@@ -165,6 +170,7 @@ export default function GlobeWrapper() {
     }, 1000);
     return () => clearInterval(interval);
 
+    // const FOCUSTIME = 1000;
     // const endTime = new Date();
     // const delay = (endTime - startTime.current + 2 * FOCUSTIME) / 1000;
     // const delay = 1;
@@ -188,7 +194,7 @@ export default function GlobeWrapper() {
         arcColor={(d) => d.color}
         arcLabel={(d) => d.label}
         arcDashLength={0.5}
-        arcDashGap={10000}
+        arcDashGap={(d) => d.dashGap}
         arcDashInitialGap={(d) => d.initialGap}
         arcDashAnimateTime={1000}
         // TODO

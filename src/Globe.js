@@ -61,7 +61,7 @@ export default function GlobeWrapper() {
         arcLabel={(d) => d.label}
         arcDashLength={0.5}
         arcDashGap={(d) => d.dashGap}
-        arcDashInitialGap={(d) => d.initialGap}
+        arcDashInitialGap={(d) => d.index}
         arcDashAnimateTime={1000}
         // TODO
         // onArcHover={() => null}

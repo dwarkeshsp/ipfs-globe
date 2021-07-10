@@ -15,7 +15,7 @@ const Responses = [
   new Response("PeerResponse", "yellow", LARGE, "Recieving response from"),
   new Response("FinalPeer", "orange", LARGE, ""),
   new Response("QueryError", "black", LARGE, ""),
-  new Response("Provider", "green", 0.5, "Provider found"),
+  new Response("Provider", "green", 0.25, "Provider found"),
   new Response("Value", "violet", LARGE, ""),
   new Response("AddingPeer", "white", LARGE, ""),
   new Response("DialingPeer", "blue", LARGE, "Dialing"),
@@ -26,7 +26,10 @@ const Responses = [
 async function getIPGeo(IP) {
   const url =
     "https://api.ipgeolocation.io/ipgeo?apiKey=" + IPGeoKey + "&ip=" + IP;
-  const response = await fetch(url);
+  const response = await fetch(url).catch((e) => {
+    console.error(e);
+    return null;
+  });
   return parseJson(await response.text());
 }
 
@@ -91,49 +94,50 @@ async function getProvidersData() {
   return providersData;
 }
 
+async function getArcData(response, userData) {
+  const isProvider = Responses[response.Type].name === "Provider";
+  const peerID = isProvider ? response.Responses[0].ID : response.ID;
+  const peerGeo = await getPeerGeo(response);
+  if (peerGeo == null) return null;
+
+  const { name, color, dashGap, labelPrefix } = Responses[response.Type];
+
+  let startLat = userData.latitude,
+    startLng = userData.longitude,
+    endLat = peerGeo.latitude,
+    endLng = peerGeo.longitude;
+
+  if (name === "PeerResponse")
+    [startLat, startLng, endLat, endLng] = [endLat, endLng, startLat, startLng];
+
+  return {
+    startLat: startLat,
+    startLng: startLng,
+    endLat: endLat,
+    endLng: endLng,
+    color: color,
+    dashGap: dashGap,
+    description: [labelPrefix, peerID.substring(0, 5), "..."].join(" "),
+  };
+}
+
 async function getArcsData() {
   const providersData = await getProvidersData();
   console.log("providers Data", providersData);
   const userData = await getUserGeo();
 
-  let arcsData = [];
-  let i = 0;
-  for (const response of providersData) {
-    const isProvider = Responses[response.Type].name === "Provider";
-    const peerID = isProvider ? response.Responses[0].ID : response.ID;
-    const peerGeo = await getPeerGeo(response);
-    if (peerGeo == null) continue;
+  let arcsData = (
+    await Promise.all(
+      providersData.map(
+        async (response) => await getArcData(response, userData)
+      )
+    )
+  ).filter((arcData) => arcData !== null);
 
-    const { name, color, dashGap, labelPrefix } = Responses[response.Type];
-
-    let startLat = userData.latitude,
-      startLng = userData.longitude,
-      endLat = peerGeo.latitude,
-      endLng = peerGeo.longitude;
-
-    if (name === "PeerResponse")
-      [startLat, startLng, endLat, endLng] = [
-        endLat,
-        endLng,
-        startLat,
-        startLng,
-      ];
-
-    arcsData.push({
-      startLat: startLat,
-      startLng: startLng,
-      endLat: endLat,
-      endLng: endLng,
-      color: color,
-      dashGap: dashGap,
-      description: [labelPrefix, peerID.substring(0, 5), "..."].join(" "),
-      initialGap: i,
-    });
-
-    i++;
+  for (let i = 0; i < arcsData.length; i++) {
+    arcsData[i].index = i;
   }
 
-  console.log("final arcs data", arcsData);
   return arcsData;
 }
 

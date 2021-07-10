@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import parseJson from "parse-json";
 import Globe from "react-globe.gl";
-import { ipstackKey } from "./keys";
+
+const ipstackKey = "d01bc145e4b3ea86a88186dd7ae2c320";
 
 const LARGE = 100000;
 function Response(name, color, dashGap, labelPrefix) {
@@ -90,7 +91,7 @@ async function getProvidersData() {
   return providersData;
 }
 
-async function getArcData() {
+async function getArcsData() {
   const providersData = await getProvidersData();
   console.log("providers Data", providersData);
   const userData = await getUserGeo();
@@ -149,7 +150,7 @@ export default function GlobeWrapper() {
       globeEl.current.pointOfView({ lat: latitude, lng: longitude }, 1000)
     );
 
-    getArcData().then((data) => setArcsData(data));
+    getArcsData().then((data) => setArcsData(data));
   }, []);
 
   useEffect(() => {

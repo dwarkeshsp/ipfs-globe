@@ -21,8 +21,6 @@ const Responses = [
   new Response("DialingPeer", "blue", LARGE, "Dialing"),
 ];
 
-// TODO: Change to use ipgeolocation.io Javascript API
-// https://ipgeolocation.io/documentation/ip-geolocation-api.html
 async function getIPGeo(IP) {
   const url =
     "https://api.ipgeolocation.io/ipgeo?apiKey=" + IPGeoKey + "&ip=" + IP;
@@ -30,7 +28,13 @@ async function getIPGeo(IP) {
     console.error(e);
     return null;
   });
-  return parseJson(await response.text());
+  const geoData = await response.json();
+  if (geoData.message !== undefined) {
+    console.error(geoData.message);
+    return null;
+  }
+  console.log(geoData);
+  return geoData;
 }
 
 async function getPeerGeo(response) {
@@ -137,6 +141,8 @@ async function getArcsData() {
   for (let i = 0; i < arcsData.length; i++) {
     arcsData[i].index = i;
   }
+
+  console.log(arcsData);
 
   return arcsData;
 }

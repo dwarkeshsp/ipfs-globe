@@ -49,9 +49,9 @@ export default function GlobeWrapper() {
 
   return (
     <React.Fragment>
-      {/* <div style={{ height: "10vh"}}>
+      <div style={{ zIndex: 1, position: "absolute" }}>
         <h3>{description}</h3>
-      </div> */}
+      </div>
       <Globe
         // height={window.innerHeight * 0.9}
         ref={globeEl}

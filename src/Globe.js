@@ -6,7 +6,9 @@ export default function GlobeWrapper() {
   const globeEl = useRef();
   const [arcsData, setArcsData] = useState([]);
   const [description, setDescription] = useState("");
-  // const startTime = useRef(new Date());
+  const [CID, setCID] = useState(
+    "QmbWqxBEKC3P8tqsKc98xmWNzrzDtRLMiMPL8wBuTGsMnR"
+  );
 
   useEffect(() => {
     globeEl.current.controls().autoRotate = true;
@@ -15,17 +17,15 @@ export default function GlobeWrapper() {
       globeEl.current.pointOfView({ lat: latitude, lng: longitude }, 1000)
     );
 
-    getArcsData().then((data) => setArcsData(data));
+    handleSubmit();
   }, []);
 
   useEffect(() => {
-    arcsData.length && console.log("arcsData", arcsData);
     if (!arcsData.length) {
       return;
     }
 
     let index = 0;
-
     const interval = setInterval(() => {
       if (index < arcsData.length) {
         setDescription(arcsData[index].description);
@@ -35,21 +35,40 @@ export default function GlobeWrapper() {
       }
     }, 1000);
     return () => clearInterval(interval);
-
-    // const FOCUSTIME = 1000;
-    // const endTime = new Date();
-    // const delay = (endTime - startTime.current + 2 * FOCUSTIME) / 1000;
-    // const delay = 1;
-
-    // console.log("delay (s):", delay);
-    // for (let i = 0; i < arcsData.length; i++) {
-    //   arcsData[i].initialGap += delay;
-    // }
   }, [arcsData]);
+
+  async function handleSubmit() {
+    setDescription("Loading...");
+    console.log("getting arcs data");
+    const arcsData = await getArcsData(CID);
+    setArcsData(arcsData);
+  }
 
   return (
     <React.Fragment>
-      <div style={{ zIndex: 1, position: "absolute" }}>
+      <div
+        style={{
+          zIndex: 1,
+          position: "absolute",
+          width: "100vw",
+        }}
+      >
+        <h1 style={{ textAlign: "center" }}>IPFS Globe</h1>
+        {/* <form
+          onSubmit={() => {
+            console.log("submitting");
+          }}
+        >
+          <label>
+            CID:
+            <input
+              type="CID"
+              value={CID}
+              onChange={(e) => setCID(e.target.value)}
+            />
+          </label>
+          <input type="submit" value="Submit" />
+        </form> */}
         <h3>{description}</h3>
       </div>
       <Globe

@@ -82,11 +82,10 @@ async function getUserGeo() {
   return parseJson(await response.text());
 }
 
-async function getProvidersData() {
-  const ID = "QmbWqxBEKC3P8tqsKc98xmWNzrzDtRLMiMPL8wBuTGsMnR";
+async function getProvidersData(CID) {
   const url =
     "https://node1.delegate.ipfs.io/api/v0/dht/findprovs?arg=" +
-    ID +
+    CID +
     "&verbose=true";
   // API seems to respond with multiple JSONs so I need to pull them together into an array
   const response = await fetch(url, { method: "POST" });
@@ -125,8 +124,8 @@ async function getArcData(response, userData) {
   };
 }
 
-async function getArcsData() {
-  const providersData = await getProvidersData();
+async function getArcsData(CID) {
+  const providersData = await getProvidersData(CID);
   console.log("providers Data", providersData);
   const userData = await getUserGeo();
 

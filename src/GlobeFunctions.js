@@ -120,7 +120,9 @@ async function getArcData(response, userData) {
     endLng: endLng,
     color: color,
     dashGap: dashGap,
-    description: [labelPrefix, peerID.substring(0, 5), "..."].join(" "),
+    description: labelPrefix + " " + peerID,
+    isProvider: isProvider,
+    peerID: peerID,
   };
 }
 

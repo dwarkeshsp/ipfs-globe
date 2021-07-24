@@ -1,3 +1,4 @@
+import { Typography, TextField, Button } from "@material-ui/core";
 import React, { useEffect, useRef, useState } from "react";
 import Globe from "react-globe.gl";
 import { getArcsData, getUserGeo } from "./GlobeFunctions";
@@ -16,8 +17,6 @@ export default function GlobeWrapper() {
     getUserGeo().then(({ latitude, longitude }) =>
       globeEl.current.pointOfView({ lat: latitude, lng: longitude }, 1000)
     );
-
-    handleSubmit();
   }, []);
 
   useEffect(() => {
@@ -37,7 +36,8 @@ export default function GlobeWrapper() {
     return () => clearInterval(interval);
   }, [arcsData]);
 
-  async function handleSubmit() {
+  async function handleSubmit(e) {
+    e.preventDefault();
     setDescription("Loading...");
     console.log("getting arcs data");
     const arcsData = await getArcsData(CID);
@@ -45,31 +45,29 @@ export default function GlobeWrapper() {
   }
 
   return (
-    <React.Fragment>
+    <div>
       <div
         style={{
           zIndex: 1,
-          position: "absolute",
           width: "100vw",
+          position: "absolute",
+          textAlign: "center",
         }}
       >
-        <h1 style={{ textAlign: "center" }}>IPFS Globe</h1>
-        {/* <form
-          onSubmit={() => {
-            console.log("submitting");
-          }}
-        >
-          <label>
-            CID:
-            <input
-              type="CID"
-              value={CID}
-              onChange={(e) => setCID(e.target.value)}
-            />
-          </label>
-          <input type="submit" value="Submit" />
-        </form> */}
-        <h3>{description}</h3>
+        <Typography style={{ zIndex: 1 }} variant="h4">
+          IPFS Globe
+        </Typography>
+        <Typography variant="h6">
+          See how the DHT locates the providers for the CID you specify
+        </Typography>
+        <TextField
+          label="CID"
+          value={CID}
+          onChange={(e) => setCID(e.target.value)}
+          variant="outlined"
+        />
+        <Button onClick={handleSubmit}>Search</Button>
+        <Typography variant="h5">{description}</Typography>
       </div>
       <Globe
         // height={window.innerHeight * 0.9}
@@ -78,13 +76,13 @@ export default function GlobeWrapper() {
         arcsData={arcsData}
         arcColor={(d) => d.color}
         arcLabel={(d) => d.label}
-        arcDashLength={0.5}
+        arcDashLength={0.25}
         arcDashGap={(d) => d.dashGap}
         arcDashInitialGap={(d) => d.index}
         arcDashAnimateTime={1000}
         // TODO
         // onArcHover={() => null}
       />
-    </React.Fragment>
+    </div>
   );
 }

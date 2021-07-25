@@ -1,6 +1,8 @@
 import parseJson from "parse-json";
 
 const IPGeoKey = "13a068f7429343e496052365e92986ee";
+const nodeURLPrefix = "https://node1.delegate.ipfs.io/api/v0/dht/";
+const localURLPrefix = "http://127.0.0.1:5001/api/v0/dht/";
 
 const LARGE = 100000;
 function Response(name, color, dashGap, labelPrefix) {
@@ -126,7 +128,7 @@ async function getArcData(response, userData) {
   };
 }
 
-async function getArcsData(CID) {
+async function getArcsData(CID, usingDaemon) {
   const providersData = await getProvidersData(CID);
   console.log("providers Data", providersData);
   const userData = await getUserGeo();
@@ -147,5 +149,7 @@ async function getArcsData(CID) {
 
   return arcsData;
 }
+
+function createNode() {}
 
 export { getArcsData, getUserGeo };

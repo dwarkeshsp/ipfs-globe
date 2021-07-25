@@ -24,6 +24,8 @@ export default function GlobeWrapper() {
     if (!arcsData.length) {
       return;
     }
+    for (const arcData of arcsData) console.log(arcData.description);
+    console.log("\n\n");
 
     let index = 0;
     const interval = setInterval(() => {
@@ -32,6 +34,7 @@ export default function GlobeWrapper() {
         if (isProvider) {
           setProviders((providers) => [...providers, peerID]);
         }
+        console.log(description);
         setDescription(description);
         index++;
       } else {
@@ -80,18 +83,28 @@ export default function GlobeWrapper() {
           textAlign: "center",
         }}
       >
-        <Typography variant="h4">IPFS Globe</Typography>
-        <Typography variant="h6">
+        <Typography style={{ top: "10px" }} variant="h4" gutterBottom>
+          IPFS Globe
+        </Typography>
+        <Typography variant="caption" paragraph>
           See how the DHT locates the providers for the CID you specify
         </Typography>
-        <TextField
-          label="CID"
-          value={CID}
-          onChange={(e) => setCID(e.target.value)}
-          variant="outlined"
-        />
-        <Button onClick={handleSubmit}>Search</Button>
-        <Typography variant="h5">{description}</Typography>
+        <div style={{ marginBottom: "1rem" }}>
+          <TextField
+            label="CID"
+            value={CID}
+            onChange={(e) => setCID(e.target.value)}
+            variant="outlined"
+          />
+          <Button
+            style={{ top: "10px", left: "25px" }}
+            onClick={handleSubmit}
+            variant="contained"
+          >
+            Search
+          </Button>
+        </div>
+        <Typography variant="h6">{description}</Typography>
       </div>
     );
   }

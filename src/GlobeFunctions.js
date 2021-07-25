@@ -1,8 +1,8 @@
 import parseJson from "parse-json";
 
 const IPGeoKey = "13a068f7429343e496052365e92986ee";
-const nodeURLPrefix = "https://node1.delegate.ipfs.io/api/v0/dht/";
-const localURLPrefix = "http://127.0.0.1:5001/api/v0/dht/";
+const nodePrefix = "https://node1.delegate.ipfs.io/api/v0/dht/";
+const localPrefix = "http://127.0.0.1:5001/api/v0/dht/";
 
 const LARGE = 100000;
 function Response(name, color, dashGap, labelPrefix) {
@@ -39,12 +39,9 @@ async function getIPGeo(IP) {
   return geoData;
 }
 
-async function getPeerGeo(response) {
+async function getPeerGeo(response, prefix) {
   async function getPeerData(ID) {
-    const url =
-      "https://node1.delegate.ipfs.io/api/v0/dht/findpeer?arg=" +
-      ID +
-      "&verbose=false";
+    const url = prefix + "findpeer?arg=" + ID + "&verbose=true";
     const apiResponse = await fetch(url, { method: "POST" });
     const text = await apiResponse.text();
 
@@ -72,7 +69,7 @@ async function getPeerGeo(response) {
   const data = isProvider ? response : await getPeerData(response.ID);
   if (data == null) return null;
   const addresses = data.Responses[0].Addrs;
-  if (!addresses.length) return null;
+  if (addresses == null || !addresses.length) return null;
   const IP = getAddressesIP(addresses);
   console.log(IP);
   return await getIPGeo(IP);
@@ -84,11 +81,8 @@ async function getUserGeo() {
   return parseJson(await response.text());
 }
 
-async function getProvidersData(CID) {
-  const url =
-    "https://node1.delegate.ipfs.io/api/v0/dht/findprovs?arg=" +
-    CID +
-    "&verbose=true";
+async function getProvidersData(CID, prefix) {
+  const url = prefix + "findprovs?arg=" + CID + "&verbose=true";
   // API seems to respond with multiple JSONs so I need to pull them together into an array
   const response = await fetch(url, { method: "POST" });
   const text = await response.text();
@@ -99,10 +93,10 @@ async function getProvidersData(CID) {
   return providersData;
 }
 
-async function getArcData(response, userData) {
+async function getArcData(response, userData, prefix) {
   const isProvider = Responses[response.Type].name === "Provider";
   const peerID = isProvider ? response.Responses[0].ID : response.ID;
-  const peerGeo = await getPeerGeo(response);
+  const peerGeo = await getPeerGeo(response, prefix);
   if (peerGeo == null) return null;
 
   const { name, color, dashGap, labelPrefix } = Responses[response.Type];
@@ -129,14 +123,15 @@ async function getArcData(response, userData) {
 }
 
 async function getArcsData(CID, usingDaemon) {
-  const providersData = await getProvidersData(CID);
+  const prefix = usingDaemon ? localPrefix : nodePrefix;
+  const providersData = await getProvidersData(CID, prefix);
   console.log("providers Data", providersData);
   const userData = await getUserGeo();
 
   let arcsData = (
     await Promise.all(
       providersData.map(
-        async (response) => await getArcData(response, userData)
+        async (response) => await getArcData(response, userData, prefix)
       )
     )
   ).filter((arcData) => arcData !== null);
@@ -149,7 +144,5 @@ async function getArcsData(CID, usingDaemon) {
 
   return arcsData;
 }
-
-function createNode() {}
 
 export { getArcsData, getUserGeo };

@@ -35,7 +35,18 @@ export default function GlobeWrapper() {
 
     initializeGlobe();
     testDaemon();
+    test();
   }, []);
+
+  async function test() {
+    const response = await fetch(
+      "http://127.0.0.1:5001/api/v0/dht/findprovs?arg=QmbWqxBEKC3P8tqsKc98xmWNzrzDtRLMiMPL8wBuTGsMnR",
+      {
+        method: "POST",
+      }
+    );
+    console.log(await response.text());
+  }
 
   useEffect(() => {
     if (!arcsData.length) {

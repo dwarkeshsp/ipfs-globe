@@ -1,4 +1,4 @@
-import { Typography, TextField, Button, Link } from "@material-ui/core";
+import { Typography, TextField, Button, Link, Grid } from "@material-ui/core";
 import React, { useEffect, useRef, useState } from "react";
 import Globe from "react-globe.gl";
 import { getArcsData, getUserGeo } from "./GlobeFunctions";
@@ -114,29 +114,43 @@ function Header({
         width: "100vw",
         position: "absolute",
         textAlign: "center",
+        marginTop: "0.5rem",
       }}
     >
-      <Typography style={{ top: "10px" }} variant="h4" gutterBottom>
-        IPFS Globe
-      </Typography>
-      <Typography variant="caption" paragraph>
-        See how the DHT locates the providers for the CID you specify
-      </Typography>
-      <div style={{ marginBottom: "1rem" }}>
-        <TextField
-          label="CID"
-          value={CID}
-          onChange={(e) => setCID(e.target.value)}
-          variant="outlined"
-        />
-        <Button
-          style={{ top: "10px", left: "25px" }}
-          onClick={handleSearch}
-          variant="contained"
+      <Typography variant="h4">
+        IPFS Globe{" "}
+        <Link
+          variant="caption"
+          href="https://github.com/dwarkeshsp/ipfs-globe/"
+          target="_blank"
         >
-          Search
-        </Button>
-      </div>
+          Source
+        </Link>
+      </Typography>
+      <Typography variant="body2">
+        See how the IPFS DHT locates the providers for the CID you specify
+      </Typography>
+      <Grid
+        style={{ marginTop: "0.25rem", marginBottom: "0.25rem" }}
+        container
+        spacing={3}
+        justifyContent="center"
+        alignItems="center"
+      >
+        <Grid item>
+          <TextField
+            label="CID"
+            value={CID}
+            onChange={(e) => setCID(e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+        <Grid item>
+          <Button onClick={handleSearch} variant="contained">
+            Search
+          </Button>
+        </Grid>
+      </Grid>
       <Typography variant="body1">{description}</Typography>
     </div>
   );

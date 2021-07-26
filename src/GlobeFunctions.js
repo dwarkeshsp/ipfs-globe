@@ -35,7 +35,6 @@ async function getIPGeo(IP) {
     console.error(geoData.message);
     return null;
   }
-  console.log(geoData);
   return geoData;
 }
 
@@ -67,11 +66,16 @@ async function getPeerGeo(response, prefix) {
 
   const isProvider = Responses[response.Type].name === "Provider";
   const data = isProvider ? response : await getPeerData(response.ID);
-  if (data == null) return null;
+  if (data == null) {
+    console.error("Peer data is null\nIs provider?", isProvider);
+    return null;
+  }
   const addresses = data.Responses[0].Addrs;
-  if (addresses == null || !addresses.length) return null;
+  if (addresses == null || !addresses.length) {
+    console.error("Addrs is empty or null\nPeer data:", data);
+    return null;
+  }
   const IP = getAddressesIP(addresses);
-  console.log(IP);
   return await getIPGeo(IP);
 }
 
@@ -125,7 +129,6 @@ async function getArcData(response, userData, prefix) {
 async function getArcsData(CID, usingDaemon) {
   const prefix = usingDaemon ? localPrefix : nodePrefix;
   const providersData = await getProvidersData(CID, prefix);
-  console.log("providers Data", providersData);
   const userData = await getUserGeo();
 
   let arcsData = (
@@ -137,10 +140,8 @@ async function getArcsData(CID, usingDaemon) {
   ).filter((arcData) => arcData !== null);
 
   for (let i = 0; i < arcsData.length; i++) {
-    arcsData[i].index = i;
+    arcsData[i].index = i + 1;
   }
-
-  console.log(arcsData);
 
   return arcsData;
 }

@@ -35,43 +35,33 @@ export default function GlobeWrapper() {
 
     initializeGlobe();
     testDaemon();
-    test();
   }, []);
-
-  async function test() {
-    const response = await fetch(
-      "http://127.0.0.1:5001/api/v0/dht/findprovs?arg=QmbWqxBEKC3P8tqsKc98xmWNzrzDtRLMiMPL8wBuTGsMnR",
-      {
-        method: "POST",
-      }
-    );
-    console.log(await response.text());
-  }
 
   useEffect(() => {
     if (!arcsData.length) {
       return;
     }
     for (const arcData of arcsData) console.log(arcData.description);
-    console.log("\n\n");
+    // console.log("\n\n");
+    // console.log("START");
 
     let index = 0;
-    const interval = setInterval(() => {
+
+    function updateDescription() {
       if (index < arcsData.length) {
         const { description, isProvider, peerID } = arcsData[index];
         if (isProvider) {
           setProviders((providers) => [...providers, peerID]);
         }
-        console.log(description);
         setDescription(description);
         index++;
+        setTimeout(updateDescription, 1000);
       } else {
-        console.log("done with labels");
         setDescription("");
-        return;
       }
-    }, 1000);
-    return () => clearInterval(interval);
+    }
+
+    updateDescription();
   }, [arcsData]);
 
   return (
@@ -85,7 +75,7 @@ export default function GlobeWrapper() {
         usingDaemon={usingDaemon}
       />
       <ProvidersFound providers={providers} />
-      {usingDaemon !== null && <DaemonInfo usingDaemon={usingDaemon} />}
+      <DaemonInfo usingDaemon={usingDaemon} />
       <Globe
         // height={window.innerHeight * 0.9}
         ref={globeEl}
@@ -113,7 +103,6 @@ function Header({
   async function handleSearch(e) {
     e.preventDefault();
     setDescription("Loading...");
-    console.log("getting arcs data");
     const arcsData = await getArcsData(CID, usingDaemon);
     setArcsData(arcsData);
   }
@@ -165,9 +154,10 @@ function ProvidersFound({ providers }) {
     >
       <div style={{ marginLeft: "1rem" }}>
         <Typography variant="h6">Providers Found:</Typography>
-        {providers.map((provider) => (
-          <Typography variant="body2">{provider}</Typography>
-        ))}
+        {providers.length &&
+          providers.map((provider) => (
+            <Typography variant="body2">{provider}</Typography>
+          ))}
       </div>
     </div>
   );
@@ -185,12 +175,15 @@ function DaemonInfo({ usingDaemon }) {
         marginRight: "1rem",
       }}
     >
-      {usingDaemon ? (
+      {usingDaemon !== null && usingDaemon ? (
         <Typography>Connected to your local daemon. </Typography>
       ) : (
         <Typography>
           Using an IPFS Node. To use your local daemon, follow these{" "}
-          <Link href="https://github.com/dwarkeshsp/ipfs-globe/blob/master/README.md">
+          <Link
+            href="https://github.com/dwarkeshsp/ipfs-globe/blob/master/README.md"
+            target="_blank"
+          >
             instructions
           </Link>
           .

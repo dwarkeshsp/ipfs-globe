@@ -108,8 +108,9 @@ function Header({
         width: "100vw",
         position: "absolute",
         textAlign: "center",
-        marginTop: "0.5rem",
+        paddingTop: "0.5rem",
       }}
+      container
     >
       <Typography variant="h4">
         IPFS Globe{" "}
@@ -121,13 +122,13 @@ function Header({
           Source
         </Link>
       </Typography>
-      <Typography variant="body2">
+      <Typography variant="body2" gutt>
         See how the IPFS DHT locates the providers for the CID you specify
       </Typography>
       <Grid
-        style={{ marginTop: "0.25rem", marginBottom: "0.25rem" }}
+        style={{ paddingTop: "0.5rem", paddingBottom: "0.5rem" }}
         container
-        spacing={3}
+        // spacing={3}
         justifyContent="center"
         alignItems="center"
       >
@@ -157,16 +158,18 @@ function Footer({ providers, usingDaemon }) {
         zIndex: 1,
         position: "absolute",
         bottom: 0,
-        marginLeft: "1rem",
-        marginRight: "1rem",
-        marginBottom: "1rem",
+        width: "100vw",
+
+        paddingLeft: "1rem",
+        paddingRight: "1rem",
+        paddingBottom: "1rem",
       }}
       container
       justifyContent="space-between"
       alignItems="flex-end"
     >
       <Grid item>
-        <Typography variant="h6">Providers Found:</Typography>
+        <Typography variant="body1">Providers Found:</Typography>
         {providers.length &&
           providers.map((provider) => (
             <Typography variant="body2">{provider}</Typography>

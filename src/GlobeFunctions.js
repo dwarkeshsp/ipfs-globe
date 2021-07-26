@@ -131,6 +131,7 @@ async function getArcsData(CID, usingDaemon) {
   const providersData = await getProvidersData(CID, prefix);
   const userData = await getUserGeo();
 
+  // asynchronously gets peer arc data
   let arcsData = (
     await Promise.all(
       providersData.map(

@@ -41,12 +41,8 @@ export default function GlobeWrapper() {
     if (!arcsData.length) {
       return;
     }
-    for (const arcData of arcsData) console.log(arcData.description);
-    // console.log("\n\n");
-    // console.log("START");
 
     let index = 0;
-
     function updateDescription() {
       if (index < arcsData.length) {
         const { description, isProvider, peerID } = arcsData[index];
@@ -74,10 +70,8 @@ export default function GlobeWrapper() {
         setArcsData={setArcsData}
         usingDaemon={usingDaemon}
       />
-      <ProvidersFound providers={providers} />
-      <DaemonInfo usingDaemon={usingDaemon} />
+      <Footer providers={providers} usingDaemon={usingDaemon} />
       <Globe
-        // height={window.innerHeight * 0.9}
         ref={globeEl}
         globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
         arcsData={arcsData}
@@ -156,53 +150,44 @@ function Header({
   );
 }
 
-function ProvidersFound({ providers }) {
+function Footer({ providers, usingDaemon }) {
   return (
-    <div
+    <Grid
       style={{
         zIndex: 1,
         position: "absolute",
         bottom: 0,
+        marginLeft: "1rem",
+        marginRight: "1rem",
         marginBottom: "1rem",
       }}
+      container
+      justifyContent="space-between"
+      alignItems="flex-end"
     >
-      <div style={{ marginLeft: "1rem" }}>
+      <Grid item>
         <Typography variant="h6">Providers Found:</Typography>
         {providers.length &&
           providers.map((provider) => (
             <Typography variant="body2">{provider}</Typography>
           ))}
-      </div>
-    </div>
-  );
-}
-
-function DaemonInfo({ usingDaemon }) {
-  return (
-    <div
-      style={{
-        zIndex: 1,
-        position: "absolute",
-        bottom: 0,
-        right: 0,
-        marginBottom: "1rem",
-        marginRight: "1rem",
-      }}
-    >
-      {usingDaemon !== null && usingDaemon ? (
-        <Typography>Connected to your local daemon. </Typography>
-      ) : (
-        <Typography>
-          Using an IPFS Node. To use your local daemon, follow these{" "}
-          <Link
-            href="https://github.com/dwarkeshsp/ipfs-globe/blob/master/README.md"
-            target="_blank"
-          >
-            instructions
-          </Link>
-          .
-        </Typography>
-      )}
-    </div>
+      </Grid>
+      <Grid item>
+        {usingDaemon !== null && usingDaemon ? (
+          <Typography>Connected to your local daemon. </Typography>
+        ) : (
+          <Typography>
+            Using an IPFS Node. To use your local daemon, follow these{" "}
+            <Link
+              href="https://github.com/dwarkeshsp/ipfs-globe/blob/master/README.md"
+              target="_blank"
+            >
+              instructions
+            </Link>
+            .
+          </Typography>
+        )}
+      </Grid>
+    </Grid>
   );
 }

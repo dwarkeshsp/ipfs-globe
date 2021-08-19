@@ -159,7 +159,6 @@ function Footer({ providers, usingDaemon }) {
         position: "absolute",
         bottom: 0,
         width: "100vw",
-
         paddingLeft: "1rem",
         paddingRight: "1rem",
         paddingBottom: "1rem",
